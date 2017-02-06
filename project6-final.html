@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <style>
+  /*坐标轴样式 */  
+   h2 {
+     text-align:center;
+   }
+  .xAxis path,
+  .xAxis line{
+    fill:none;
+    stroke:black;
+    shape-rendering:crispEdges;
+  }
+  .xAxis text{
+    font-family:sans-serif
+    font-size:11px
+  }
+  .yAxis path,
+  .yAxis line{
+    fill:none;
+    stroke:black;
+    shape-rendering:crispEdges;
+  }
+  .yAxis text{
+    font-family:sans-serif
+    font-size:11px
+  }
+  </style>
+  </head>
+<body>
+  <script type="text/javascript">
+  
+  function draw(data){
+    //常量
+    var margin = 100
+    var width = 1200 - margin
+    var height = 600 - margin
+    var r = 2
+    var color = 'black'
+    
+    //添加标题
+    d3.select('body')
+     .append('h2')
+     .text('击球率和全垒得分散点图')
+
+    //创建svg
+    var svg = d3.select('body').append('svg')
+              .attr('width',width+margin)
+              .attr('height',height+margin)
+    
+    //avg最小最大值
+    var avgExtent = d3.extent(data,function(d){
+        return Number(d['avg'])
+    })
+    // 比例缩放
+    var xScale = d3.scale.linear()
+                   .range([margin,width])
+                   .domain(avgExtent)
+    // X轴
+    var avgAxis = d3.svg.axis()
+                    .scale(xScale)
+                    .orient('bottom')
+   //添加x轴
+   svg.append('g')
+      .attr('class','xAxis')
+      .attr('transform',"translate(0,"+ height +")")
+      .call(avgAxis)
+      .append('text')
+      .text('avg')
+      .attr('x',width/2)
+      .attr('y',40)
+  //HR最小最大值
+   var hrExtent = d3.extent(data,function(d){
+       return Number(d['HR'])
+   })
+  // 比例缩放
+   var yScale = d3.scale.linear()
+                  .range([height,margin])
+                  .domain(hrExtent)
+   // Y轴
+   var HRAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient('left')
+   // 添加Y轴
+   svg.append('g')
+      .attr('class','yAxis')
+      .attr('transform',"translate("+ margin + ",0)")
+      .call(HRAxis)
+      .append("text")
+      .text("HR")
+      .attr("transform","rotate(-90)")
+      .attr("text-anchor","end")
+      .attr("dx","-10em")
+      .attr('dy','1em')
+      
+   
+      
+   // 添加散点
+   /*
+   var point = svg.selectAll('circle')
+     .data(data)
+     .enter()
+     .append('circle')
+     .attr('class','point')
+     .attr('cx',function(d){
+       return xScale(d['avg'])
+       
+     })
+     .attr('cy',function(d){
+       return yScale(d['HR'])
+       
+     })
+     .attr('r',r)
+     .attr('fill',function(d){
+       if (d['handedness'] == 'L'){
+         return 'red'
+       }else{
+         return 'blue'
+       }
+     })*/
+     
+     
+    var note = svg.append('g')
+                  .attr('class','note')
+                  .attr('transform',"translate("+ (width - 100) +","+ 15 + ")")
+                  .selectAll('g')
+                  .data(['Left Hand','Right Hand','Both Hand','clear'])
+                  .enter()
+                  .append('g')
+    var buttons = note.append('circle')
+        .attr('cy',function(d,i){
+          return i*30
+        })
+        .attr('r',7)
+        .attr('fill',function(d){
+          if (d == 'Left Hand'){
+            return 'red'
+          }else if (d == 'Right Hand'){
+            return 'blue'
+          }else if (d == 'Both Hand'){
+            return 'orange'
+          }else{
+            return  'gray'
+          }
+        })
+    
+    var points = svg.selectAll('circle')
+       .data(data)
+       .enter()
+       .append('circle')
+       .attr('class',function(d){
+         if (d['handedness'] == 'L'){
+           return 'redPoint'
+        }else if (d['handedness'] == 'R'){
+          return 'bluePoint'
+        }else{
+          return 'orangePoint'
+        }
+        })
+        
+    points.on('mouseover',function(d){
+      console.log(d['height'])
+    })
+    
+    function aa(circle,color){
+       circle.attr('cx',function(d){
+         return xScale(d['avg'])
+     })
+       .attr('cy',function(d){
+         return yScale(d['HR'])
+       
+     })
+       .attr('r',r)
+       .attr('opacity',0.01)
+       .transition()
+       .duration(3000)
+       .attr('fill',color)
+       .attr('opacity',1)
+    }
+    
+  
+        
+    buttons.on('click',function(d,i){
+      if (i == 0){
+        aa(svg.selectAll('.redPoint'),'red')
+       console.log('111')
+      }else if (i == 1){
+        aa(svg.selectAll('.bluePoint'),'blue')
+        console.log('222')
+      }else if (i == 2){
+        aa(svg.selectAll('.orangePoint'),'orange')
+        console.log('333')
+      }else{
+        svg.selectAll('.redPoint').remove()
+        svg.selectAll('.bluePoint').remove()
+        svg.selectAll('.orangePoint').remove()
+        svg.selectAll('circle')
+       .data(data)
+       .enter()
+       .append('circle')
+       .attr('class',function(d){
+         if (d['handedness'] == 'L'){
+           return 'redPoint'
+        }else if (d['handedness'] == 'R'){
+          return 'bluePoint'
+        }else{
+          return 'orangePoint'
+        }
+        })
+        console.log('444')
+      }
+    })
+    note.append('text')
+        .attr('y',function(d,i){
+          return i*30 + 5
+        })
+        .attr('x',r * 5)
+        .text(function(d){
+          return d
+        })
+        
+  }
+  
+  
+  
+  d3.csv('baseball_data.csv',draw)
+  
+  </script>
+</body>
+</html>
+
+
+
+
